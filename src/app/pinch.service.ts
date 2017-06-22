@@ -38,16 +38,6 @@ export class PinchService {
         }
     }
     pointermove_handler(ev) {
-        // This function implements a 2-pointer horizontal pinch/zoom gesture.
-        //
-        // If the distance between the two pointers has increased (zoom in),
-        // the taget element's background is changed to 'pink' and if the
-        // distance is decreasing (zoom out), the color is changed to 'lightblue'.
-        //
-        // This function sets the target element's border to 'dashed' to visually
-        // indicate the pointer's target received a move event.
-        this.log('pointerMove', ev);
-        ev.target.style.border = 'dashed';
         // Find this event in the cache and update its record with this event
         for (let i = 0; i < this.evCache.length; i++) {
             if (ev.pointerId === this.evCache[i].pointerId) {
@@ -55,30 +45,7 @@ export class PinchService {
                 break;
             }
         }
-        // If two pointers are down, check for pinch gestures
-        if (this.evCache.length === 2) {
-            // Calculate the distance between the two pointers
-            let curDiff = this.getDiff();
-
-            this.scaleData.scale = (this.originalScale * curDiff / this.originalDistance);
-            this.scaleData.scale = Math.min(this.scaleData.scale, 5);
-            this.scaleData.scale = Math.max(this.scaleData.scale, .1);
-
-            if (this.prevDiff > 0) {
-                if (curDiff > this.prevDiff) {
-                    // The distance between the two pointers has increased
-                    this.log('Pinch moving OUT -> Zoom in', ev);
-                    ev.target.style.background = 'pink';
-                }
-                if (curDiff < this.prevDiff) {
-                    // The distance between the two pointers has decreased
-                    this.log('Pinch moving IN -> Zoom out', ev);
-                    ev.target.style.background = 'lightblue';
-                }
-            }
-            // Cache the distance for the next move event
-            this.prevDiff = curDiff;
-        }
+        window.requestAnimationFrame(() => {this.paint()});
     }
     pointerup_handler(ev) {
         this.log(ev.type, ev);
@@ -88,10 +55,6 @@ export class PinchService {
         ev.target.style.background = 'white';
         ev.target.style.border = '1px solid black';
 
-        // If the number of pointers down is less than two then reset diff tracker
-        if (this.evCache.length < 2) {
-            this.prevDiff = -1;
-        }
     }
     remove_event(ev) {
         // Remove this event from the target's cache
@@ -106,5 +69,17 @@ export class PinchService {
         return Math.sqrt(
             Math.pow(this.evCache[0].clientX - this.evCache[1].clientX, 2) +
             Math.pow(this.evCache[0].clientY - this.evCache[1].clientY, 2));
+    }
+    paint() {
+        // If two pointers are down, check for pinch gestures
+        if (this.evCache.length === 2) {
+            // Calculate the distance between the two pointers
+            let curDiff = this.getDiff();
+
+            this.scaleData.scale = (this.originalScale * curDiff / this.originalDistance);
+            this.scaleData.scale = Math.min(this.scaleData.scale, 5);
+            this.scaleData.scale = Math.max(this.scaleData.scale, .1);
+
+        }
     }
 }
