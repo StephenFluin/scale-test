@@ -11,26 +11,63 @@ declare var ImageCapture;
 @Component({
     selector: 'app-image',
     template: `
-    <h1>Photo</h1>
-    <button (click)="takePhoto()">Take Photo</button>
-    <video *ngIf="!imageUrl" id="preview"></video>
-    <img [src]="imageUrl" *ngIf="imageUrl"/>
-    <h1>Options</h1>
-    <div *ngIf="capabilities">
-        <h2>Capabilities</h2>
-        {{capabilities | json}}
-        <input type="range" [(ngModel)]="settings.zoom" (ngModelChange)="updateSettings()" *ngIf="capabilities.zoom"
-            [min]="capabilities.zoom.min"
-            [max]="capabilities.zoom.max"
-            [step]="capabilities.zoom.step"
-            > {{settings.zoom}}
+    <style>
+        h1 {color:green;}
+        .page {
+            display:flex;
+            flex-direction:column;
+            justify-content:center;
+            width:100vw;
+            height:100vh;
+        }
+        img, video {
+            max-width:100%;
+        }
+        section {
+            padding: 16px;
+        }
+    </style>
+    <div class="page">
+         <div style="display:flex;padding:0px;position:absolute;top:0px;bottom:0px;">
+            <video *ngIf="!imageUrl" id="preview" (click)="takePhoto()"></video>
+            <img [src]="imageUrl" *ngIf="imageUrl"/>
+        </div>
+        <div style="position:absolute;top:0px;bottom:0px;">
+            <section>
+                <h1>Photo</h1>
+                <button (click)="takePhoto()">Take Photo</button><button (click)="activateCamera(camera)">Clear</button>
+            </section>
+            <section style="flex-grow:1"></section>
+            <section>
+                <h1>Options</h1>
+                <div *ngIf="capabilities">
+                    <h2>Capabilities</h2>
+                    <!--{{capabilities | json}}-->
+                    <input type="range" [(ngModel)]="settings.zoom" (ngModelChange)="updateSettings()" *ngIf="capabilities.zoom"
+                        [min]="capabilities.zoom.min"
+                        [max]="capabilities.zoom.max"
+                        [step]="capabilities.zoom.step"
+                        > {{settings.zoom}}
+                </div>
+                <h2>Devices</h2>
+
+                <div *ngFor="let device of devices | async" [title]="device | json">
+                    <label>
+                        <input [value]="device.deviceId"
+                            type="radio"
+                            [(ngModel)]="camera"
+                            title="device"
+                            (ngModelChange)="activateCamera(camera)">
+                        {{device.label}}
+                    </label>
+                </div>
+            </section>
+        </div>
     </div>
-<h2>Devices</h2>
-<div *ngFor="let device of devices | async" [title]="device | json">{{device.label}}</div>
   `,
     styles: []
 })
-export class ImageComponent implements OnInit {
+export class ImageComponent {
 
     devices: Observable<any[]>;
     imageCapture;
@@ -38,21 +75,24 @@ export class ImageComponent implements OnInit {
     imageUrl;
     previewUrl;
     capabilities;
+    camera;
     settings: any = {};
 
 
     constructor(public sanitizer: DomSanitizer) {
-        navigator.mediaDevices.getUserMedia({ video: true })
-            .then((stream) => { this.gotMedia(stream) })
-            .catch(error => console.error('getUserMedia() error:', error));
+        this.activateCamera();
+
 
 
 
         this.devices = Observable.fromPromise(<Promise<any[]>>navigator.mediaDevices.enumerateDevices())
             .map(list => list.filter(item => item.kind === 'videoinput'));
     }
-
-    ngOnInit() {
+    activateCamera(camera = null) {
+        this.imageUrl = null;
+        navigator.mediaDevices.getUserMedia({ video: { deviceId: camera ? { exact: camera } : undefined } })
+            .then((stream) => { this.gotMedia(stream) })
+            .catch(error => console.error('getUserMedia() error:', error));
     }
 
     gotMedia(mediaStream) {
@@ -67,9 +107,8 @@ export class ImageComponent implements OnInit {
 
             this.capabilities = this.mediaStreamTrack.getCapabilities();
             console.log(this.capabilities);
-            setTimeout(() => { }, 100);
 
-        }, 100);
+        }, 500);
     }
 
     takePhoto() {
