@@ -77,7 +77,7 @@ export class PinchService {
             let curDiff = this.getDiff();
 
             this.scaleData.scale = (this.originalScale * curDiff / this.originalDistance);
-            this.scaleData.scale = Math.min(this.scaleData.scale, 5);
+            this.scaleData.scale = Math.min(this.scaleData.scale, 2);
             this.scaleData.scale = Math.max(this.scaleData.scale, .1);
 
         }

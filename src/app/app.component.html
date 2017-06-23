@@ -29,7 +29,8 @@
     }
 </style>
 <h1>Tools</h1>
-Scale <input type="range" min=".1" max="5" step=".01" [(ngModel)]="scaleData.scale"> {{scaleData.scale}}
+Scale <input type="range" min=".1" max="2" step=".01" [(ngModel)]="scaleData.scale"> {{scaleData.scale}}
+
 <div id="pane" [style.transform]="'scale('+scaleData.scale+')'">
     <h1>List</h1>
     <div class="list">
