@@ -10,54 +10,7 @@ declare var ImageCapture;
 
 @Component({
     selector: 'app-image',
-    template: `
-    <style>
-        h1 {color:green;}
-        .page {
-            display:flex;
-            flex-direction:column;
-            justify-content:center;
-            width:100vw;
-            height:100vh;
-        }
-        img, video {
-            max-width:100%;
-        }
-        section {
-            padding: 16px;
-        }
-    </style>
-    <div class="page" style="background-color:black;">
-         <div style="display:flex;padding:0px;position:absolute;top:0px;bottom:0px;justify-contents:center;align-items:center;width:100%;">
-            <video *ngIf="!imageUrl" id="preview" (click)="takePhoto()"></video>
-            <img [src]="imageUrl" *ngIf="imageUrl"/>
-        </div>
-        <div style="position:absolute;top:0px;bottom:0px;display:flex;flex-direction: column;width:100%;">
-            <section>
-                <button *ngIf="!imageUrl" (click)="takePhoto()">Take Photo</button>
-                <button *ngIf="imageUrl" (click)="activateCamera()" >Clear</button>
-            </section>
-            <section style="flex-grow:1"></section>
-            <section>
-                <div *ngIf="capabilities">
-                    <input type="range"
-                    *ngIf="capabilities.zoom"
-                    style="transform: rotate(-90deg);position: absolute;right: -35px;top: 50%;"
-                    [(ngModel)]="settings.zoom"
-                    (ngModelChange)="updateSettings()"
-                    [min]="capabilities.zoom.min"
-                    [max]="capabilities.zoom.max"
-                    [step]="capabilities.zoom.step"
-                        >
-                </div>
-                <button *ngIf="cameraList && cameraList.length > 1" (click)="switchCamera()">
-                    SWAP
-                </button>
-            </section>
-        </div>
-    </div>
-  `,
-    styles: []
+    templateUrl: 'image.component.html',
 })
 export class ImageComponent {
 
@@ -70,6 +23,8 @@ export class ImageComponent {
 
     selectedCameraIndex = 0;
     cameraList;
+
+    showFullScreenOption = true;
 
     settings: any = {};
 
@@ -98,6 +53,11 @@ export class ImageComponent {
         console.log("Camera index is now", this.selectedCameraIndex, this.cameraList.length);
         this.activateCamera(this.cameraList[this.selectedCameraIndex]);
         console.log("Trying to select camera", this.selectedCameraIndex, this.cameraList[this.selectedCameraIndex]);
+    }
+    fullscreen() {
+        document.getElementById('pane').webkitRequestFullscreen();
+        this.showFullScreenOption = false;
+
     }
 
     gotMedia(mediaStream) {
