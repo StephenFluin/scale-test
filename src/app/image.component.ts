@@ -27,40 +27,32 @@ declare var ImageCapture;
             padding: 16px;
         }
     </style>
-    <div class="page">
-         <div style="display:flex;padding:0px;position:absolute;top:0px;bottom:0px;">
+    <div class="page" style="background-color:black;">
+         <div style="display:flex;padding:0px;position:absolute;top:0px;bottom:0px;justify-contents:center;align-items:center;width:100%;">
             <video *ngIf="!imageUrl" id="preview" (click)="takePhoto()"></video>
             <img [src]="imageUrl" *ngIf="imageUrl"/>
         </div>
-        <div style="position:absolute;top:0px;bottom:0px;">
+        <div style="position:absolute;top:0px;bottom:0px;display:flex;flex-direction: column;width:100%;">
             <section>
-                <h1>Photo</h1>
-                <button (click)="takePhoto()">Take Photo</button><button (click)="activateCamera(camera)">Clear</button>
+                <button *ngIf="!imageUrl" (click)="takePhoto()">Take Photo</button>
+                <button *ngIf="imageUrl" (click)="activateCamera()" >Clear</button>
             </section>
             <section style="flex-grow:1"></section>
             <section>
-                <h1>Options</h1>
                 <div *ngIf="capabilities">
-                    <h2>Capabilities</h2>
-                    <!--{{capabilities | json}}-->
-                    <input type="range" [(ngModel)]="settings.zoom" (ngModelChange)="updateSettings()" *ngIf="capabilities.zoom"
-                        [min]="capabilities.zoom.min"
-                        [max]="capabilities.zoom.max"
-                        [step]="capabilities.zoom.step"
-                        > {{settings.zoom}}
+                    <input type="range"
+                    *ngIf="capabilities.zoom"
+                    style="transform: rotate(-90deg);position: absolute;right: -35px;top: 50%;"
+                    [(ngModel)]="settings.zoom"
+                    (ngModelChange)="updateSettings()"
+                    [min]="capabilities.zoom.min"
+                    [max]="capabilities.zoom.max"
+                    [step]="capabilities.zoom.step"
+                        >
                 </div>
-                <h2>Devices</h2>
-
-                <div *ngFor="let device of devices | async" [title]="device | json">
-                    <label>
-                        <input [value]="device.deviceId"
-                            type="radio"
-                            [(ngModel)]="camera"
-                            title="device"
-                            (ngModelChange)="activateCamera(camera)">
-                        {{device.label}}
-                    </label>
-                </div>
+                <button *ngIf="cameraList && cameraList.length > 1" (click)="switchCamera()">
+                    SWAP
+                </button>
             </section>
         </div>
     </div>
@@ -75,7 +67,10 @@ export class ImageComponent {
     imageUrl;
     previewUrl;
     capabilities;
-    camera;
+
+    selectedCameraIndex = 0;
+    cameraList;
+
     settings: any = {};
 
 
@@ -85,14 +80,24 @@ export class ImageComponent {
 
 
 
-        this.devices = Observable.fromPromise(<Promise<any[]>>navigator.mediaDevices.enumerateDevices())
-            .map(list => list.filter(item => item.kind === 'videoinput'));
+        navigator.mediaDevices.enumerateDevices()
+            .then(list => {
+                this.cameraList = list.filter(item => item.kind === 'videoinput')
+            });
     }
     activateCamera(camera = null) {
         this.imageUrl = null;
-        navigator.mediaDevices.getUserMedia({ video: { deviceId: camera ? { exact: camera } : undefined } })
+        let constraint = { video: { deviceId: camera ? { exact: camera.deviceId } : undefined } };
+        console.log("Constraint is",constraint);
+        navigator.mediaDevices.getUserMedia(constraint)
             .then((stream) => { this.gotMedia(stream) })
             .catch(error => console.error('getUserMedia() error:', error));
+    }
+    switchCamera() {
+        this.selectedCameraIndex = (this.selectedCameraIndex + 1) % this.cameraList.length;
+        console.log("Camera index is now", this.selectedCameraIndex, this.cameraList.length);
+        this.activateCamera(this.cameraList[this.selectedCameraIndex]);
+        console.log("Trying to select camera", this.selectedCameraIndex, this.cameraList[this.selectedCameraIndex]);
     }
 
     gotMedia(mediaStream) {
